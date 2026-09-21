@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DroBud | Medication Delivery for Medirite</title>
+    <meta name="description" content="DroBud is a drone-based medication delivery service for Medirite and Shoprite Sixty60. Order chronic medication for delivery or collection at a mall hub.">
+    
+    <!-- Leaflet CSS for the map (free, no API key) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        /* Minimal inline CSS so the page is readable. You can move this to style.css later. */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f4f6f8;
+            color: #1a1a1a;
+        }
+        header {
+            background: #009b34; /* Medirite/Shoprite green tone */
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        header h1 { margin: 0; font-size: 2rem; }
+        header p { margin: 5px 0 0; font-size: 1rem; }
+        main { max-width: 900px; margin: 0 auto; padding: 20px; }
+        section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; }
+        h2 { color: #009b2f; margin-top: 0; }
+        label { display: block; margin: 10px 0 5px; font-weight: bold; }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #009b34;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        button:hover { background: #007326; }
+        .whatsapp-btn {
+            display: inline-block;
+            background: #25D366;
+            color: white;
+            padding: 12px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #map { height: 350px; width: 100%; border-radius: 4px; margin-top: 10px; }
+        .eta-box {
+            background: #e8f4ff;
+            padding: 12px;
+            border-left: 4px solid #009b34;
+            margin-top: 10px;
+            border-radius: 4px;
+        }
+        details { margin: 10px 0; padding: 10px; background: #f9f9f9; border-radius: 4px; }
+        summary { font-weight: bold; cursor: pointer; }
+        footer { text-align: center; padding: 20px; font-size: 0.85rem; color: #666; }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         SECTION 1: HEADER / BRANDING
+         ============================================ -->
+    <header>
+        <h1>DroBud</h1>
+        <p>Medication delivery by drone, for Medirite and Sixty60</p>
+    </header>
+
+    <main>
+
+        <!-- ============================================
+             SECTION 2: ORDER FORM
+             The core of the prototype. Caregiver enters
+             patient details, medication, and chooses
+             delivery method.
+             ============================================ -->
+        <section id="order">
+            <h2>Request Medication Delivery</h2>
+            <p>Complete the form below. A Medirite pharmacy will prepare your medication and dispatch a DroBud drone or reserve it for collection.</p>
+
+            <form action="#" method="POST">
+                <!-- Patient details -->
+                <label for="patient-name">Patient Full Name</label>
+                <input type="text" id="patient-name" name="patient_name" placeholder="e.g., Thandiwe Mokoena" required>
+
+                <label for="patient-id">Patient ID Number (for prescription verification)</label>
+                <input type="text" id="patient-id" name="patient_id" placeholder="e.g., 8501015800085" required>
+
+                <!-- Contact details -->
+                <label for="caregiver-name">Your Name (Caregiver / Family Member)</label>
+                <input type="text" id="caregiver-name" name="caregiver_name" placeholder="e.g., Sipho Mokoena" required>
+
+                <label for="caregiver-phone">Your WhatsApp Number</label>
+                <input type="tel" id="caregiver-phone" name="caregiver_phone" placeholder="e.g., 072 123 4567" required>
+
+                <!-- Medication details -->
+                <label for="medication">Medication Name and Dosage</label>
+                <input type="text" id="medication" name="medication" placeholder="e.g., Metformin 500mg" required>
+
+                <label for="prescription-upload">Upload Prescription Photo</label>
+                <input type="file" id="prescription-upload" name="prescription" accept="image/*">
+
+                <!-- Delivery method -->
+                <label for="delivery-method">Delivery Method</label>
+                <select id="delivery-method" name="delivery_method" required>
+                    <option value="">-- Select an option --</option>
+                    <option value="drone">Drone Delivery to My Address</option>
+                    <option value="hub">Collect from Medirite Mall Hub</option>
+                </select>
+
+                <!-- Address / Hub selection -->
+                <label for="delivery-address">Delivery Address (if drone delivery)</label>
+                <input type="text" id="delivery-address" name="delivery_address" placeholder="e.g., 12 Main Road, Ferndale, Randburg">
+
+                <label for="mall-hub">Select Nearest Medirite Mall Hub (if collecting)</label>
+                <select id="mall-hub" name="mall_hub">
+                    <option value="">-- Select a mall --</option>
+                    <option value="cresta">Cresta Shopping Centre</option>
+                    <option value="northgate">Northgate Shopping Centre</option>
+                    <option value="brightwater">Brightwater Commons</option>
+                    <option value="randridge">Randridge Mall</option>
+                    <option value="ferndale">Ferndale on Republic</option>
+                </select>
+
+                <!-- POPIA Consent -->
+                <label>
+                    <input type="checkbox" name="popia_consent" required style="width:auto;">
+                    I consent to DroBud processing my personal information for the purpose of medication delivery, in accordance with POPIA.
+                </label>
+
+                <button type="submit">Submit Request</button>
+            </form>
+        </section>
+
+        <!-- ============================================
+             SECTION 3: MAP VIEW (Simulated Drone Tracking)
+             Leaflet map showing a simulated drone marker
+             moving toward the destination.
+             ============================================ -->
+        <section id="tracking">
+            <h2>Live Drone Tracking (Simulation)</h2>
+            <p>This is a prototype view. In a live deployment, the drone's position would update in real time from the flight controller.</p>
+
+            <div id="map"></div>
+
+            <div class="eta-box">
+                <strong>Estimated Delivery:</strong> <span id="eta">Calculating...</span><br>
+                <strong>Distance Remaining:</strong> <span id="distance">-- km</span>
+            </div>
+        </section>
+
+        <!-- ============================================
+             SECTION 4: WHATSAPP CONTACT
+             ============================================ -->
+        <section id="contact">
+            <h2>Need Help? Chat on WhatsApp</h2>
+            <p>Our support team is available Monday to Saturday, 08:00 – 18:00.</p>
+            <a href="https://wa.me/27721234567?text=Hi%20DroBud%2C%20I%27d%20like%20to%20enquire%20about%20medication%20delivery" class="whatsapp-btn" target="_blank">
+                Chat with DroBud on WhatsApp
+            </a>
+        </section>
+
+        <!-- ============================================
+             SECTION 5: FAQ
+             ============================================ -->
+        <section id="faq">
+            <h2>Frequently Asked Questions</h2>
+
+            <details>
+                <summary>How does DroBud work?</summary>
+                <p>You submit a request through this form. A Medirite pharmacy prepares your medication. A DroBud drone delivers it to your address, or you can collect it from a Medirite mall hub.</p>
+            </details>
+
+            <details>
+                <summary>Is my personal information safe?</summary>
+                <p>Yes. We comply with POPIA. Your information is only used for medication delivery and is never shared with third parties without your consent.</p>
+            </details>
+
+            <details>
+                <summary>What if I miss the drone delivery?</summary>
+                <p>The drone will wait for a short period at the delivery location. If you are unavailable, the medication will be returned to the nearest Medirite hub for collection.</p>
+            </details>
+
+            <details>
+                <summary>How do I collect from a mall hub?</summary>
+                <p>Select "Collect from Medirite Mall Hub" in the form. You will receive a WhatsApp notification when your medication is ready, along with a collection code.</p>
+            </details>
+
+            <details>
+                <summary>Which areas do you currently serve?</summary>
+                <p>The prototype is designed for Randburg and surrounding areas, including Cresta, Northgate, Ferndale, and Randridge.</p>
+            </details>
+        </section>
+
+        <!-- ============================================
+             SECTION 6: PRIVACY POLICY (POPIA)
+             ============================================ -->
+        <section id="privacy">
+            <h2>Privacy Policy (POPIA Compliance)</h2>
+            <p><strong>What we collect:</strong> Patient name, ID number, caregiver name, WhatsApp number, medication details, delivery address or selected mall hub, and prescription photo.</p>
+            <p><strong>Why we collect it:</strong> To verify prescriptions, prepare medication, and deliver it to the correct location.</p>
+            <p><strong>How we protect it:</strong> Data is stored securely and access is limited to authorised Medirite pharmacy staff and DroBud administrators.</p>
+            <p><strong>Your rights:</strong> You may request access to, correction of, or deletion of your personal information at any time by contacting us on WhatsApp.</p>
+            <p><strong>Consent:</strong> By submitting the form, you confirm that you have the patient's permission to share their information for the purpose of medication delivery.</p>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>DroBud Prototype | Built for Medirite / Shoprite Sixty60 Pitch | &copy; 2026</p>
+    </footer>
+
+    <!-- ============================================
+         LEAFLET JAVASCRIPT (Map + Drone Simulation)
+         ============================================ -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Initialize the map centred on Randburg
+        const map = L.map('map').setView([-26.0936, 27.9950], 12);
+
+        // 2. Add OpenStreetMap tiles (free, no API key)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        // 3. Define start (Medirite hub) and destination (client)
+        const startPoint = [-26.0936, 27.9950]; // Medirite hub (example: Ferndale)
+        const endPoint = [-26.1070, 28.0050]; // Client destination (example)
+
+        // 4. Add markers
+        const droneMarker = L.marker(startPoint).addTo(map).bindPopup('DroBud Drone (Start)').openPopup();
+        L.marker(endPoint).addTo(map).bindPopup('Client Destination');
+
+        // 5. Draw the route line
+        const routeLine = L.polyline([startPoint, endPoint], { color: '#00539b', weight: 3 }).addTo(map);
+
+        // 6. Animate the drone marker toward the destination
+        let progress = 0; // 0 to 1
+        const steps = 100;
+        const interval = setInterval(() => {
+            progress += 1 / steps;
+            if (progress >= 1) {
+                progress = 1;
+                clearInterval(interval);
+            }
+
+            // Interpolate position
+            const lat = startPoint[0] + (endPoint[0] - startPoint[0]) * progress;
+            const lng = startPoint[1] + (endPoint[1] - startPoint[1]) * progress;
+            droneMarker.setLatLng([lat, lng]);
+
+            // Update distance and ETA
+            const totalDistanceKm = 2.5; // example distance
+            const remaining = (totalDistanceKm * (1 - progress)).toFixed(2);
+            document.getElementById('distance').textContent = remaining + ' km';
+
+            const etaMinutes = Math.ceil(remaining * 4); // assume 4 min per km
+            document.getElementById('eta').textContent = etaMinutes + ' minutes';
+        }, 200);
+    </script>
+
+</body>
+</html>
