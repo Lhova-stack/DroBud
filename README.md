@@ -42,5 +42,5 @@ DroBud is a software layer that integrates with existing pharmacy platforms like
 
 The map uses **Leaflet** with OpenStreetMap tiles. A drone marker is animated from a Medirite hub to a client destination. The ETA and distance update in real time. This is a **simulation** — real drone telemetry would require CAA-approved BVLOS operations.
 
-## 🚀 How to Run
+
 
